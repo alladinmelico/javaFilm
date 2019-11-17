@@ -9,10 +9,11 @@ public class Main {
 
 			@Override
 			public void run() {
-				FrameAdmin frameAdmin = new FrameAdmin();
-				
+				DBConnect dbConnect = new DBConnect();
+				FrameAdmin frameAdmin = new FrameAdmin(dbConnect);
+				FrameUser frameUser = new FrameUser(dbConnect);
+				FrameLogin frameLogin = new FrameLogin(dbConnect,frameAdmin,frameUser);
 			}
-			
 		});
 	}
 
