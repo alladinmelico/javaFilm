@@ -23,7 +23,7 @@ public class FrameLogin extends JFrame{
 	private FrameAdmin frameAdmin;
 	private FrameUser frameUser;
 	private JPasswordField txtPassword;
-	
+	Customer customer;
 	
 	public FrameLogin(DBConnect dbConnect,FrameAdmin frameAdmin, FrameUser frameUser) {
 		this.frameAdmin = frameAdmin;
@@ -90,12 +90,20 @@ public class FrameLogin extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				String userName = txtUserName.getText();
 				String userpassword = String.valueOf(txtPassword.getPassword());
+				int idCust = 0,intZip = 0;
+				String strCustName = null ,strAddress = null,strCity = null,strProvince = null,strUsername = null;
+				
 				ResultSet result = dbConnect.selectQuery
 						("SELECT * FROM tblCustomer WHERE strUserName = '" + userName + "' AND strPasscode = PASSWORD('" + userpassword + "');" );
 				try {
 					String tempUserName = null;
 					while(result.next()) {
 						tempUserName = result.getString("strUserName");
+						idCust = result.getInt("idCust");
+						strCustName = result.getString("strUserName");
+						strAddress = result.getString("strAddress");
+						strCity = result.getString("strCity");
+						strProvince = result.getString("strProvince");
 					}
 					
 					if (tempUserName != null) {
@@ -103,9 +111,14 @@ public class FrameLogin extends JFrame{
 							frameAdmin.setVisible(true);
 							setVisible(false);
 						} else {
-						frameUser.setVisible(true);
-						setVisible(false);
-						}
+							customer = new Customer(idCust, strCustName, strAddress,
+									strCity, strProvince, tempUserName,
+									userpassword,intZip);
+							
+							frameUser.setCustomer(customer);
+							frameUser.setVisible(true);
+							setVisible(false);
+							}
 					}
 				} catch (SQLException e1) {
 					e1.printStackTrace();

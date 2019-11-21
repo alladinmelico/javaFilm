@@ -36,6 +36,7 @@ public class FrameUser extends JFrame {
 	private static DefaultTableModel modelShop,modelCart;
 	private Product product;
 	private int shopSelected;
+	private Customer customer;
 	
 	public FrameUser(DBConnect dbConnect) {
 		product = new Product();
@@ -96,6 +97,7 @@ public class FrameUser extends JFrame {
 		panel_1.add(scrollPane_1);
 		
 		tblCart = new JTable();
+		
 		scrollPane_1.setViewportView(tblCart);
 		tblCart.setModel(modelCart);
 		
@@ -118,7 +120,7 @@ public class FrameUser extends JFrame {
 		JButton btnAddToCart = new JButton("Add to Cart");
 		btnAddToCart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if (txtShopQnty.getText() != null || !(txtShopQnty.getText().equals("0"))) {
+				if (!(txtShopQnty.getText().equals("0") || txtShopQnty.getText().equals(""))) {
 					
 					int id = (int) tblShop.getModel().getValueAt(shopSelected, 0);
 					String desc = tblShop.getModel().getValueAt(shopSelected, 1).toString();
@@ -141,24 +143,38 @@ public class FrameUser extends JFrame {
 		
 		JLabel label_1 = new JLabel("Quantity");
 		label_1.setFont(new Font("Tahoma", Font.PLAIN, 18));
-		label_1.setBounds(652, 26, 86, 20);
+		label_1.setBounds(612, 26, 86, 20);
 		panel_1.add(label_1);
 		
 		txtCartQnty = new JTextField();
 		txtCartQnty.setColumns(10);
-		txtCartQnty.setBounds(652, 46, 86, 20);
+		txtCartQnty.setBounds(612, 46, 86, 20);
 		panel_1.add(txtCartQnty);
 		
 		JButton btnCheckOut = new JButton("Check out");
+		btnCheckOut.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				for (Product prod: product.getCart()) {
+					try {
+						dbConnect.orderTransaction(customer.getIdCust(), prod.getQnty(), prod.getId());
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+				
+				
+			}
+		});
 		btnCheckOut.setBounds(914, 26, 89, 40);
 		panel_1.add(btnCheckOut);
 		
 		JButton btnSave = new JButton("Save");
-		btnSave.setBounds(748, 43, 57, 23);
+		btnSave.setBounds(708, 43, 81, 23);
 		panel_1.add(btnSave);
 		
 		JButton btnDelete = new JButton("Delete");
-		btnDelete.setBounds(815, 43, 86, 23);
+		
+		btnDelete.setBounds(799, 43, 102, 23);
 		panel_1.add(btnDelete);
 		
 		JLabel lblCartDesc = new JLabel("ID");
@@ -174,6 +190,23 @@ public class FrameUser extends JFrame {
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("Purchase History", null, panel_2, null);
 		
+		btnDelete.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int toDel = 0;
+				ArrayList<Product> prod = product.getCart();
+				
+				for (int i=0 ; i<prod.size(); i++) {
+					if (prod.get(i).getId() == Integer.parseInt(tblCart.getModel().getValueAt(i, 0).toString())) {
+						toDel = prod.get(i).getId();
+						break;
+					}
+				}
+				
+				product.deleteFromCart(toDel);
+				showOnCart();
+			}
+		});
+		
 		tblShop.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -184,9 +217,31 @@ public class FrameUser extends JFrame {
 			      lblDesc.setText(String.valueOf(value));
 			}
 		});
+		
+		tblCart.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int rowIndex = tblCart.getSelectedRow();
+			      int colIndex = tblCart.getSelectedColumn();
+			      shopSelected = rowIndex;
+			      String value = tblCart.getModel().getValueAt(rowIndex, 0).toString();
+			      lblCartDesc.setText(String.valueOf(value));
+			      txtCartQnty.setText(tblCart.getModel().getValueAt(rowIndex, 4).toString());
+			      showOnCart();
+			}
+		});
+		
 		showDataShop();
 	}
 	
+	protected Customer getCustomer() {
+		return customer;
+	}
+
+	protected void setCustomer(Customer customer) {
+		this.customer = customer;
+	}
+
 	public void showDataShop() {
 		ResultSet resultSet = dbConnect.selectQuery("SELECT * FROM tblProduct");
 		int numOfRow = 0;
@@ -231,7 +286,7 @@ public class FrameUser extends JFrame {
 			data[i][4] = cart.get(i).getQnty();
 			data[i][5] = cart.get(i).getTotal();
 		}
-		
+		modelCart.setRowCount(0);
 		for(int i=0; i< data.length; i++) {
 			modelCart.addRow(data[i]);
 		}

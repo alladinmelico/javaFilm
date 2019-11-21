@@ -39,11 +39,12 @@ public class Product {
 	}
 	
 	public void deleteFromCart(int toDel) {
-		for (Product prod : cart) {
-			if(prod.getId() == toDel) {
-				cart.remove(prod);
+		for (int i = 0 ; i<cart.size(); i++) {
+			if(cart.get(i).getId() == toDel) {
+				cart.remove(i);
 			}
 		}
+		
 	}
 	
 	public void updateCart(int toUpdate, Product prod) {

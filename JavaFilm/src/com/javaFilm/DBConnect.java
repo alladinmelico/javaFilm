@@ -30,6 +30,48 @@ public class DBConnect {
 		}
 	}
 	
+	public void orderTransaction(int idCust,int intQuantity, int idProd) throws SQLException {
+		PreparedStatement prepStmt = null;
+		PreparedStatement prepStmt2 = null;
+		PreparedStatement prepStmt3 = null;
+		String createOrderQuery = "INSERT INTO tblOrder(tblCustomer_idCust) VALUE(?)";
+		String createOrderline = "INSERT INTO tblorderline(intQuantity,tblOrder_idOrder,tblProduct_idProd) "
+				+ "VALUE(?,?,?);";
+		String onHandDeduction = "UPDATE tblProduct(intOnHand) VALUE((SELECT intOnHand tblProduct WHERE idProd = ?) - ?) WHERE idProd = ?";
+		
+		ResultSet rs = null;
+		try {
+			conn.setAutoCommit(false);
+			
+			prepStmt = conn.prepareStatement(createOrderQuery, Statement.RETURN_GENERATED_KEYS);
+			prepStmt.setInt(1, idCust);
+			int rowAffected = prepStmt.executeUpdate();
+
+			rs = prepStmt.getGeneratedKeys();
+			int ordID = 0;
+			if(rs.next())
+                ordID = rs.getInt(1);
+			
+			if(rowAffected == 1)
+            {
+			prepStmt2 = conn.prepareStatement(createOrderline);
+			prepStmt2.setInt(1, intQuantity);
+			prepStmt2.setInt(2, ordID);
+			prepStmt2.setInt(3, idProd);
+			
+			prepStmt2.executeUpdate();
+            }
+			
+			prepStmt3 = conn.prepareStatement(onHandDeduction);
+			prepStmt3.setInt(1, idProd);
+			prepStmt3.setInt(2, intQuantity);
+			prepStmt3.setInt(3, idProd);
+			conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		conn.setAutoCommit(true);
+	}
 	public void custUpdate(int idCust, String strCustName, String strAddress, String strCity, String strProvince,
 			int intZip, String strUserName, String strPasscode) throws SQLException {
 		
