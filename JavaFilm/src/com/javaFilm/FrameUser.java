@@ -18,12 +18,23 @@ import javax.swing.JSplitPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperReport;
+
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.InputStream;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JEditorPane;
+import javax.swing.JFormattedTextField;
+import javax.swing.JTextPane;
+import javax.swing.JTextArea;
+
+
 
 public class FrameUser extends JFrame {
 
@@ -33,10 +44,13 @@ public class FrameUser extends JFrame {
 	private JTextField txtCartQnty;
 	private JTable tblShop;
 	private JTable tblCart;
-	private static DefaultTableModel modelShop,modelCart;
+	private static DefaultTableModel modelShop,modelCart,modelOrder;
 	private Product product;
 	private int shopSelected;
 	private Customer customer;
+	private JTable tblOrder;
+
+	private FormEventListener formEventListener;
 	
 	public FrameUser(DBConnect dbConnect) {
 		product = new Product();
@@ -61,10 +75,26 @@ public class FrameUser extends JFrame {
 		panel.add(lblNewLabel);
 		
 		JButton btnLogOut = new JButton("Log out");
+		btnLogOut.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				FormEvent formEvent = new FormEvent(this, true);
+				
+				if (formEventListener != null) {
+					formEventListener.formEventOccured(formEvent);
+				}
+				setVisible(false);
+			}
+		});
 		btnLogOut.setBounds(919, 20, 89, 23);
 		panel.add(btnLogOut);
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				showOrder();
+			}
+		});
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		
 		JPanel panel_1 = new JPanel();
@@ -86,9 +116,12 @@ public class FrameUser extends JFrame {
 		
 		modelShop = new DefaultTableModel();
 		modelCart = new DefaultTableModel();
+		modelOrder = new DefaultTableModel();
 		
 		modelShop.setColumnIdentifiers(columnShop);
 		modelCart.setColumnIdentifiers(columnCart);
+		modelOrder.setColumnIdentifiers(columnShop);
+		
 		
 		tblShop.setModel(modelShop);
 		
@@ -189,7 +222,24 @@ public class FrameUser extends JFrame {
 		
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("Purchase History", null, panel_2, null);
+		panel_2.setLayout(null);
 		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		scrollPane_2.setBounds(10, 11, 296, 639);
+		panel_2.add(scrollPane_2);
+		
+		tblOrder = new JTable();
+		
+		scrollPane_2.setViewportView(tblOrder);
+		
+		tblOrder.setModel(modelOrder);
+		
+		JScrollPane scrollPane_3 = new JScrollPane();
+		scrollPane_3.setBounds(327, 11, 676, 639);
+		panel_2.add(scrollPane_3);
+		
+		JTextArea textArea = new JTextArea();
+		scrollPane_3.setViewportView(textArea);
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int toDel = 0;
@@ -222,15 +272,56 @@ public class FrameUser extends JFrame {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int rowIndex = tblCart.getSelectedRow();
-			      int colIndex = tblCart.getSelectedColumn();
-			      shopSelected = rowIndex;
-			      String value = tblCart.getModel().getValueAt(rowIndex, 0).toString();
-			      lblCartDesc.setText(String.valueOf(value));
-			      txtCartQnty.setText(tblCart.getModel().getValueAt(rowIndex, 4).toString());
-			      showOnCart();
+		      int colIndex = tblCart.getSelectedColumn();
+		      shopSelected = rowIndex;
+		      String value = tblCart.getModel().getValueAt(rowIndex, 0).toString();
+		      lblCartDesc.setText(String.valueOf(value));
+		      txtCartQnty.setText(tblCart.getModel().getValueAt(rowIndex, 4).toString());
+		      showOnCart();
 			}
 		});
 		
+	
+		tblOrder.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int rowIndex = tblOrder.getSelectedRow();
+			      int colIndex = tblOrder.getSelectedColumn();
+			      shopSelected = rowIndex;
+			      String value = tblOrder.getModel().getValueAt(rowIndex, 0).toString();
+
+			      textArea.append("\t\tCUSTOMER INFO:");
+			      textArea.append("\nID:\t" + customer.getIdCust());
+			      textArea.append("\nUsername:\t" + customer.getUsername());
+			      textArea.append("\nName:\t" + customer.getName());
+			      textArea.append("\nAddress:\t" + customer.getAddress());
+			      textArea.append("\nCity:\t" + customer.getCity());
+			      textArea.append("\nProvince:\t" + customer.getProvince());
+			      textArea.append("\nZip:\t" + customer.getZip());
+			      
+			      textArea.append("\n\n\t\tORDER INFO:");
+			      
+			      ResultSet rs = dbConnect.selectQuery("CALL showPurchase(" + String.valueOf(customer.getIdCust() + ");"));
+			      
+			      try {
+					while (rs.next()) {
+						textArea.append("\nDescription:\t" + rs.getString("strDesc"));
+						textArea.append("\nDate:\t" + rs.getString("dtmOrderDate"));
+						textArea.append("\nPrice:\t" + rs.getInt("intPrice"));
+						textArea.append("\nQuantity:\t" + rs.getInt("intQuantity"));
+						textArea.append("\nTotal:\t" + (rs.getInt("intPrice") * rs.getInt("intQuantity")));
+						textArea.append("\n\n\t\t======Thank you======");
+						
+					  }
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+		
+		if(customer != null) {
+			showOrder();
+		}
 		showDataShop();
 	}
 	
@@ -290,5 +381,44 @@ public class FrameUser extends JFrame {
 		for(int i=0; i< data.length; i++) {
 			modelCart.addRow(data[i]);
 		}
+	}
+	
+	public void showOrder() {
+		ResultSet resultSet;
+		
+			resultSet = dbConnect.selectQuery("CALL showPurchase(" + String.valueOf(customer.getIdCust() + ");"));
+		
+		int numOfRow = 0;
+		int rowIterate =0;
+		
+		try {
+			while(resultSet.next()) {
+				numOfRow++;
+			}
+			
+			resultSet.beforeFirst();
+		
+			Object[][] data = new Object[numOfRow][5];
+		while(resultSet.next()) {
+			data[rowIterate][0]= resultSet.getInt("idProd");
+			data[rowIterate][1]= resultSet.getString("strDesc");
+			data[rowIterate][2]= resultSet.getString("dtmFinish");
+			data[rowIterate][3]= resultSet.getInt("intPrice");
+			data[rowIterate][4]= resultSet.getInt("intOnHand");
+			rowIterate++;
+		}
+		modelOrder.setRowCount(0);
+			for(int i=0; i<numOfRow; i++) {
+				modelOrder.addRow(data[i]);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+
+	public void setFormEventListener(FormEventListener formEventListener) {
+		this.formEventListener = formEventListener;
 	}
 }

@@ -139,6 +139,17 @@ public class FrameLogin extends JFrame{
 		});
 		
 		
+		frameUser.setFormEventListener(new FormEventListener() {
+
+			@Override
+			public void formEventOccured(FormEvent ev) {
+				if (ev.isActive()) {
+					setVisible(true);
+				}
+			}
+			
+		});
+		
 		btnNewButton.setBackground(new Color(139, 69, 19));
 		btnNewButton.setBounds(108, 305, 89, 23);
 		panel.add(btnNewButton);
