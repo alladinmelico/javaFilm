@@ -8,24 +8,37 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JLabel;
 import java.awt.Font;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JButton;
 import javax.swing.JSplitPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class FrameUser extends JFrame {
 
 	DBConnect dbConnect;
 	private HashMap<String, Integer> map;
-	private JTextField textField_1;
-	private JTextField textField_3;
+	private JTextField txtShopQnty;
+	private JTextField txtCartQnty;
 	private JTable tblShop;
 	private JTable tblCart;
+	private static DefaultTableModel modelShop,modelCart;
+	private Product product;
+	private int shopSelected;
+	
 	public FrameUser(DBConnect dbConnect) {
-		map = new HashMap<>();
+		product = new Product();
 		
 		
 		this.dbConnect  = dbConnect;
@@ -61,8 +74,22 @@ public class FrameUser extends JFrame {
 		scrollPane.setBounds(10, 77, 447, 573);
 		panel_1.add(scrollPane);
 		
+		Object[] columnShop={"ID","Description","Date Finish","Price","Quantity"};
+		Object[] columnCart={"ID","Description","Date Finish","Price","Quantity","Total"}; 
+		
 		tblShop = new JTable();
+		
+		tblShop.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tblShop.setCellSelectionEnabled(true);
 		scrollPane.setViewportView(tblShop);
+		
+		modelShop = new DefaultTableModel();
+		modelCart = new DefaultTableModel();
+		
+		modelShop.setColumnIdentifiers(columnShop);
+		modelCart.setColumnIdentifiers(columnCart);
+		
+		tblShop.setModel(modelShop);
 		
 		JScrollPane scrollPane_1 = new JScrollPane();
 		scrollPane_1.setBounds(556, 77, 447, 573);
@@ -70,6 +97,8 @@ public class FrameUser extends JFrame {
 		
 		tblCart = new JTable();
 		scrollPane_1.setViewportView(tblCart);
+		tblCart.setModel(modelCart);
+		
 		
 		JLabel lblNewLabel_1 = new JLabel("ID");
 		lblNewLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 18));
@@ -81,13 +110,28 @@ public class FrameUser extends JFrame {
 		lblQuantity.setBounds(106, 26, 86, 20);
 		panel_1.add(lblQuantity);
 		
-		textField_1 = new JTextField();
-		textField_1.setColumns(10);
-		textField_1.setBounds(106, 46, 86, 20);
-		panel_1.add(textField_1);
+		txtShopQnty = new JTextField();
+		txtShopQnty.setColumns(10);
+		txtShopQnty.setBounds(106, 46, 86, 20);
+		panel_1.add(txtShopQnty);
 		
 		JButton btnAddToCart = new JButton("Add to Cart");
-		btnAddToCart.setBounds(368, 43, 89, 23);
+		btnAddToCart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (txtShopQnty.getText() != null || !(txtShopQnty.getText().equals("0"))) {
+					
+					int id = (int) tblShop.getModel().getValueAt(shopSelected, 0);
+					String desc = tblShop.getModel().getValueAt(shopSelected, 1).toString();
+					String finish = tblShop.getModel().getValueAt(shopSelected, 2).toString();
+					int price = (int) tblShop.getModel().getValueAt(shopSelected, 3);
+					int onHand = (int) tblShop.getModel().getValueAt(shopSelected, 4);
+					int qnty = Integer.parseInt(txtShopQnty.getText());
+					product.addToCart(new Product(id,desc,finish,price,onHand,qnty));
+					showOnCart();
+				}
+			}
+		});
+		btnAddToCart.setBounds(328, 43, 129, 23);
 		panel_1.add(btnAddToCart);
 		
 		JLabel label = new JLabel("ID");
@@ -100,10 +144,10 @@ public class FrameUser extends JFrame {
 		label_1.setBounds(652, 26, 86, 20);
 		panel_1.add(label_1);
 		
-		textField_3 = new JTextField();
-		textField_3.setColumns(10);
-		textField_3.setBounds(652, 46, 86, 20);
-		panel_1.add(textField_3);
+		txtCartQnty = new JTextField();
+		txtCartQnty.setColumns(10);
+		txtCartQnty.setBounds(652, 46, 86, 20);
+		panel_1.add(txtCartQnty);
 		
 		JButton btnCheckOut = new JButton("Check out");
 		btnCheckOut.setBounds(914, 26, 89, 40);
@@ -117,17 +161,79 @@ public class FrameUser extends JFrame {
 		btnDelete.setBounds(815, 43, 86, 23);
 		panel_1.add(btnDelete);
 		
-		JLabel label_2 = new JLabel("ID");
-		label_2.setFont(new Font("Tahoma", Font.BOLD, 18));
-		label_2.setBounds(556, 43, 46, 20);
-		panel_1.add(label_2);
+		JLabel lblCartDesc = new JLabel("ID");
+		lblCartDesc.setFont(new Font("Tahoma", Font.BOLD, 18));
+		lblCartDesc.setBounds(556, 43, 46, 20);
+		panel_1.add(lblCartDesc);
 		
-		JLabel label_3 = new JLabel("ID");
-		label_3.setFont(new Font("Tahoma", Font.BOLD, 18));
-		label_3.setBounds(10, 46, 46, 20);
-		panel_1.add(label_3);
+		JLabel lblDesc = new JLabel("ID");
+		lblDesc.setFont(new Font("Tahoma", Font.BOLD, 18));
+		lblDesc.setBounds(10, 46, 46, 20);
+		panel_1.add(lblDesc);
 		
 		JPanel panel_2 = new JPanel();
 		tabbedPane.addTab("Purchase History", null, panel_2, null);
+		
+		tblShop.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+			      int rowIndex = tblShop.getSelectedRow();
+			      int colIndex = tblShop.getSelectedColumn();
+			      shopSelected = rowIndex;
+			      String value = tblShop.getModel().getValueAt(rowIndex, 0).toString();
+			      lblDesc.setText(String.valueOf(value));
+			}
+		});
+		showDataShop();
+	}
+	
+	public void showDataShop() {
+		ResultSet resultSet = dbConnect.selectQuery("SELECT * FROM tblProduct");
+		int numOfRow = 0;
+		int rowIterate =0;
+		
+		try {
+			while(resultSet.next()) {
+				numOfRow++;
+			}
+			
+			resultSet.beforeFirst();
+		
+			Object[][] data = new Object[numOfRow][5];
+		while(resultSet.next()) {
+			data[rowIterate][0]= resultSet.getInt("idProd");
+			data[rowIterate][1]= resultSet.getString("strDesc");
+			data[rowIterate][2]= resultSet.getString("dtmFinish");
+			data[rowIterate][3]= resultSet.getInt("intPrice");
+			data[rowIterate][4]= resultSet.getInt("intOnHand");
+			rowIterate++;
+		}
+		
+			for(int i=0; i<numOfRow; i++) {
+				modelShop.addRow(data[i]);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void showOnCart() {
+		ArrayList<Product> cart = product.getCart();
+		int cartSize = cart.size();
+		Object[][] data = new Object[cartSize][6];
+		
+		for(int i = 0; i< cartSize; i++) {
+			data[i][0] = cart.get(i).getId();
+			data[i][1] = cart.get(i).getDesc();
+			data[i][2] = cart.get(i).getFinish();
+			data[i][3] = cart.get(i).getPrice();
+			data[i][4] = cart.get(i).getQnty();
+			data[i][5] = cart.get(i).getTotal();
+		}
+		
+		for(int i=0; i< data.length; i++) {
+			modelCart.addRow(data[i]);
+		}
 	}
 }

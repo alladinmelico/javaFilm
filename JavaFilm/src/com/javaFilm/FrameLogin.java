@@ -104,6 +104,7 @@ public class FrameLogin extends JFrame{
 							setVisible(false);
 						} else {
 						frameUser.setVisible(true);
+						setVisible(false);
 						}
 					}
 				} catch (SQLException e1) {
