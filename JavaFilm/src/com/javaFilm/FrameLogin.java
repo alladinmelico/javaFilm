@@ -50,6 +50,7 @@ public class FrameLogin extends JFrame{
 		panel.setLayout(null);
 		
 		JTextArea txtUserName = new JTextArea();
+		txtUserName.setTabSize(3);
 		txtUserName.setSize(new Dimension(160, 20));
 		txtUserName.setBounds(67, 191, 162, 22);
 		panel.add(txtUserName);
@@ -84,6 +85,7 @@ public class FrameLogin extends JFrame{
 		panel.add(lblFurniture);
 		
 		JButton btnNewButton = new JButton("Login");
+		btnNewButton.setForeground(Color.WHITE);
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String userName = txtUserName.getText();
@@ -95,17 +97,34 @@ public class FrameLogin extends JFrame{
 					while(result.next()) {
 						tempUserName = result.getString("strUserName");
 					}
-					if (tempUserName == null) {
-						if(userName == "root") {
+					
+					if (tempUserName != null) {
+						if (tempUserName.equals("admin")) {
 							frameAdmin.setVisible(true);
+							setVisible(false);
+						} else {
+						frameUser.setVisible(true);
 						}
-					} else frameUser.setVisible(true);
+					}
 				} catch (SQLException e1) {
 					e1.printStackTrace();
 				}
 				
 			}
 		});
+		
+		frameAdmin.setFormEventListener(new FormEventListener() {
+
+			@Override
+			public void formEventOccured(FormEvent ev) {
+				if (ev.isActive()) {
+					setVisible(true);
+				}
+			}
+			
+		});
+		
+		
 		btnNewButton.setBackground(new Color(139, 69, 19));
 		btnNewButton.setBounds(108, 305, 89, 23);
 		panel.add(btnNewButton);

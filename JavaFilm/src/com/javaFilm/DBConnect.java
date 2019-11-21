@@ -19,7 +19,7 @@ public class DBConnect {
 	public ResultSet selectQuery(String query) {
 		try {
 			ResultSet result;
-			Statement stmt = conn.createStatement();
+			Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,ResultSet.CONCUR_UPDATABLE);
 			result = stmt.executeQuery(query);
 			
 			return result;
@@ -36,7 +36,7 @@ public class DBConnect {
 		PreparedStatement prepStmt = null;
 		
 		String query = "UPDATE tblCustomer SET strCustName = ?, strAddress = ?, strCity = ?, strProvince = ?,"
-				+ " intZip = ?, strUserName = ?, strPasscode = PASSWORD(?) WHERE idCust = ?";
+				+ " intZip = ?, strUserName = ? WHERE idCust = ?";
 		
 		try {
 			conn.setAutoCommit(false);
@@ -49,8 +49,8 @@ public class DBConnect {
 			prepStmt.setString(4, strProvince);
 			prepStmt.setInt(5, intZip);
 			prepStmt.setString(6, strUserName);
-			prepStmt.setString(7, strPasscode);
-			prepStmt.setInt(8, idCust);
+//			prepStmt.setString(7, strPasscode);
+			prepStmt.setInt(7, idCust);
 			
 			
 			prepStmt.executeUpdate();
@@ -81,7 +81,7 @@ public class DBConnect {
 		
 		PreparedStatement prepStmt = null;
 		
-		String query = "INSERT INTO tblCustomer(strCustName,strAddress,strCity,strProvince,intZip,strUserName,strPasscode) VALUES(?,?,?,?,?,PASSWORD(?))";
+		String query = "INSERT INTO tblCustomer(strCustName,strAddress,strCity,strProvince,intZip,strUserName,strPasscode) VALUES(?,?,?,?,?,?,PASSWORD(?))";
 		
 		try {
 			conn.setAutoCommit(false);

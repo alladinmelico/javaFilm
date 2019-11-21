@@ -56,6 +56,4 @@ public class Customer {
 	protected void setZip(int zip) {
 		this.zip = zip;
 	}
-	
-	
 }
