@@ -47,9 +47,12 @@ public class Product {
 		
 	}
 	
-	public void updateCart(int toUpdate, Product prod) {
-		deleteFromCart(toUpdate);
-		addToCart(prod);
+	public void updateCart(int newQnty, int prod) {
+		for (int i = 0 ; i<cart.size(); i++) {
+			if(cart.get(i).getId() == prod) {
+				cart.get(i).setQnty(newQnty);
+			}
+		}
 	}
 	protected String getDesc() {
 		return desc;

@@ -7,6 +7,8 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,6 +35,9 @@ import javax.swing.JEditorPane;
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextPane;
 import javax.swing.JTextArea;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.Color;
 
 
 
@@ -53,6 +58,9 @@ public class FrameUser extends JFrame {
 	private FormEventListener formEventListener;
 	
 	public FrameUser(DBConnect dbConnect) {
+		getContentPane().setBackground(new Color(0, 139, 139));
+		setBackground(new Color(0, 139, 139));
+		
 		product = new Product();
 		
 		
@@ -64,6 +72,7 @@ public class FrameUser extends JFrame {
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		
 		JPanel panel = new JPanel();
+		panel.setBackground(new Color(0, 139, 139));
 		panel.setPreferredSize(new Dimension(50, 50));
 		panel.setSize(new Dimension(50, 50));
 		getContentPane().add(panel, BorderLayout.NORTH);
@@ -74,7 +83,11 @@ public class FrameUser extends JFrame {
 		lblNewLabel.setBounds(10, 11, 220, 28);
 		panel.add(lblNewLabel);
 		
+		
+		
 		JButton btnLogOut = new JButton("Log out");
+		btnLogOut.setBackground(new Color(105, 105, 105));
+		btnLogOut.setForeground(new Color(255, 255, 255));
 		btnLogOut.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				FormEvent formEvent = new FormEvent(this, true);
@@ -89,6 +102,7 @@ public class FrameUser extends JFrame {
 		panel.add(btnLogOut);
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane.setBackground(new Color(0, 139, 139));
 		tabbedPane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -98,6 +112,7 @@ public class FrameUser extends JFrame {
 		getContentPane().add(tabbedPane, BorderLayout.CENTER);
 		
 		JPanel panel_1 = new JPanel();
+		panel_1.setBackground(new Color(135, 206, 250));
 		tabbedPane.addTab("Shop", null, panel_1, null);
 		panel_1.setLayout(null);
 		
@@ -109,6 +124,7 @@ public class FrameUser extends JFrame {
 		Object[] columnCart={"ID","Description","Date Finish","Price","Quantity","Total"}; 
 		
 		tblShop = new JTable();
+		tblShop.setBackground(new Color(135, 206, 250));
 		
 		tblShop.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		tblShop.setCellSelectionEnabled(true);
@@ -130,6 +146,7 @@ public class FrameUser extends JFrame {
 		panel_1.add(scrollPane_1);
 		
 		tblCart = new JTable();
+		tblCart.setBackground(new Color(135, 206, 250));
 		
 		scrollPane_1.setViewportView(tblCart);
 		tblCart.setModel(modelCart);
@@ -151,18 +168,26 @@ public class FrameUser extends JFrame {
 		panel_1.add(txtShopQnty);
 		
 		JButton btnAddToCart = new JButton("Add to Cart");
+		btnAddToCart.setForeground(new Color(255, 255, 255));
+		btnAddToCart.setBackground(new Color(50, 205, 50));
 		btnAddToCart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!(txtShopQnty.getText().equals("0") || txtShopQnty.getText().equals(""))) {
-					
 					int id = (int) tblShop.getModel().getValueAt(shopSelected, 0);
 					String desc = tblShop.getModel().getValueAt(shopSelected, 1).toString();
 					String finish = tblShop.getModel().getValueAt(shopSelected, 2).toString();
 					int price = (int) tblShop.getModel().getValueAt(shopSelected, 3);
 					int onHand = (int) tblShop.getModel().getValueAt(shopSelected, 4);
 					int qnty = Integer.parseInt(txtShopQnty.getText());
-					product.addToCart(new Product(id,desc,finish,price,onHand,qnty));
-					showOnCart();
+					
+					if (Integer.parseInt(txtShopQnty.getText()) <= qnty) {
+						product.addToCart(new Product(id,desc,finish,price,onHand,qnty));
+						showOnCart();
+					} else {
+						JFrame frame = new JFrame();
+						
+						JOptionPane.showMessageDialog(frame, "The quantity inputed is greater than our Stock");
+					}
 				}
 			}
 		});
@@ -185,27 +210,40 @@ public class FrameUser extends JFrame {
 		panel_1.add(txtCartQnty);
 		
 		JButton btnCheckOut = new JButton("Check out");
+		btnCheckOut.setFont(new Font("Tahoma", Font.PLAIN, 9));
+		btnCheckOut.setForeground(new Color(255, 255, 255));
+		btnCheckOut.setBackground(new Color(50, 205, 50));
 		btnCheckOut.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				for (Product prod: product.getCart()) {
-					try {
-						dbConnect.orderTransaction(customer.getIdCust(), prod.getQnty(), prod.getId());
-					} catch (SQLException e1) {
-						e1.printStackTrace();
+				if (product.getCart().size() > 0) {
+					for (Product prod: product.getCart()) {
+						try {
+							dbConnect.orderTransaction(customer.getIdCust(), prod.getQnty(), prod.getId());
+						} catch (SQLException e1) {
+							e1.printStackTrace();
+						}
 					}
+					
+					JFrame frame = new JFrame();
+					showDataShop();
+					JOptionPane.showMessageDialog
+					(frame, "Thank you for Purchasing!\nPlease check the purchase history for the receipt");
 				}
-				
-				
 			}
 		});
 		btnCheckOut.setBounds(914, 26, 89, 40);
 		panel_1.add(btnCheckOut);
 		
 		JButton btnSave = new JButton("Save");
+		btnSave.setForeground(new Color(255, 255, 255));
+		btnSave.setBackground(new Color(255, 215, 0));
+		
 		btnSave.setBounds(708, 43, 81, 23);
 		panel_1.add(btnSave);
 		
 		JButton btnDelete = new JButton("Delete");
+		btnDelete.setForeground(new Color(255, 255, 255));
+		btnDelete.setBackground(new Color(165, 42, 42));
 		
 		btnDelete.setBounds(799, 43, 102, 23);
 		panel_1.add(btnDelete);
@@ -221,6 +259,7 @@ public class FrameUser extends JFrame {
 		panel_1.add(lblDesc);
 		
 		JPanel panel_2 = new JPanel();
+		panel_2.setBackground(new Color(135, 206, 250));
 		tabbedPane.addTab("Purchase History", null, panel_2, null);
 		panel_2.setLayout(null);
 		
@@ -229,6 +268,7 @@ public class FrameUser extends JFrame {
 		panel_2.add(scrollPane_2);
 		
 		tblOrder = new JTable();
+		tblOrder.setBackground(new Color(135, 206, 250));
 		
 		scrollPane_2.setViewportView(tblOrder);
 		
@@ -238,7 +278,21 @@ public class FrameUser extends JFrame {
 		scrollPane_3.setBounds(327, 11, 676, 639);
 		panel_2.add(scrollPane_3);
 		
+		
+		btnSave.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					product.updateCart(Integer.parseInt(txtCartQnty.getText()), Integer.parseInt(lblCartDesc.getText()));
+					showOnCart();
+				} catch (NumberFormatException ex) {
+					
+				}
+			}
+		});
+		
 		JTextArea textArea = new JTextArea();
+		textArea.setFont(new Font("Monospaced", Font.PLAIN, 18));
+		textArea.setBackground(new Color(255, 255, 255));
 		scrollPane_3.setViewportView(textArea);
 		btnDelete.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -251,7 +305,8 @@ public class FrameUser extends JFrame {
 						break;
 					}
 				}
-				
+				lblCartDesc.setText("");
+				txtCartQnty.setText("0");
 				product.deleteFromCart(toDel);
 				showOnCart();
 			}
@@ -282,6 +337,15 @@ public class FrameUser extends JFrame {
 		});
 		
 	
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowActivated(WindowEvent e) {
+				if (customer != null) {
+					lblNewLabel.setText(customer.getName());
+				}
+			}
+		});
+		
 		tblOrder.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -289,15 +353,15 @@ public class FrameUser extends JFrame {
 			      int colIndex = tblOrder.getSelectedColumn();
 			      shopSelected = rowIndex;
 			      String value = tblOrder.getModel().getValueAt(rowIndex, 0).toString();
-
+			      textArea.setText("");
 			      textArea.append("\t\tCUSTOMER INFO:");
-			      textArea.append("\nID:\t" + customer.getIdCust());
+			      textArea.append("\nID:\t\t" + customer.getIdCust());
 			      textArea.append("\nUsername:\t" + customer.getUsername());
-			      textArea.append("\nName:\t" + customer.getName());
+			      textArea.append("\nName:\t\t" + customer.getName());
 			      textArea.append("\nAddress:\t" + customer.getAddress());
-			      textArea.append("\nCity:\t" + customer.getCity());
+			      textArea.append("\nCity:\t\t" + customer.getCity());
 			      textArea.append("\nProvince:\t" + customer.getProvince());
-			      textArea.append("\nZip:\t" + customer.getZip());
+			      textArea.append("\nZip:\t\t" + customer.getZip());
 			      
 			      textArea.append("\n\n\t\tORDER INFO:");
 			      
@@ -310,9 +374,8 @@ public class FrameUser extends JFrame {
 						textArea.append("\nPrice:\t" + rs.getInt("intPrice"));
 						textArea.append("\nQuantity:\t" + rs.getInt("intQuantity"));
 						textArea.append("\nTotal:\t" + (rs.getInt("intPrice") * rs.getInt("intQuantity")));
-						textArea.append("\n\n\t\t======Thank you======");
-						
 					  }
+					textArea.append("\n\n\t\t======Thank you======");
 				} catch (SQLException e1) {
 					e1.printStackTrace();
 				}
@@ -354,7 +417,7 @@ public class FrameUser extends JFrame {
 			data[rowIterate][4]= resultSet.getInt("intOnHand");
 			rowIterate++;
 		}
-		
+		modelShop.setRowCount(0);
 			for(int i=0; i<numOfRow; i++) {
 				modelShop.addRow(data[i]);
 			}

@@ -66,12 +66,54 @@ public class DBConnect {
 			prepStmt3.setInt(1, idProd);
 			prepStmt3.setInt(2, intQuantity);
 			prepStmt3.setInt(3, idProd);
+			prepStmt3.executeUpdate();
 			conn.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		conn.setAutoCommit(true);
 	}
+	
+	public void orderSupTransaction(int idSup,int intQuantity, int idProd) throws SQLException {
+		PreparedStatement prepStmt = null;
+		PreparedStatement prepStmt2 = null;
+		
+		String createOrderQuery = "INSERT INTO tblSupplierOrder(tblSupplier_idSup,tblProduct_idProd,intQnty) VALUES(?,?,?)";
+	
+		String onHandDeduction = "UPDATE tblProduct SET intOnHand= ((SELECT intOnHand tblProduct WHERE idProd = ?) + ?) WHERE idProd = ?";
+		
+		ResultSet rs = null;
+		try {
+			conn.setAutoCommit(false);
+			
+			prepStmt = conn.prepareStatement(createOrderQuery, Statement.RETURN_GENERATED_KEYS);
+			prepStmt.setInt(1, idSup);
+			prepStmt.setInt(2, idProd);
+			prepStmt.setInt(3, intQuantity);
+			int rowAffected = prepStmt.executeUpdate();
+
+			rs = prepStmt.getGeneratedKeys();
+			int ordID = 0;
+			if(rs.next())
+                ordID = rs.getInt(1);
+			
+			if(rowAffected == 1)
+            {
+			prepStmt2 = conn.prepareStatement(onHandDeduction);
+			prepStmt2.setInt(1, idProd);
+			prepStmt2.setInt(2, intQuantity);
+			prepStmt2.setInt(3, idProd);
+			
+			prepStmt2.executeUpdate();
+            }
+
+			conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		conn.setAutoCommit(true);
+	}
+	
 	public void custUpdate(int idCust, String strCustName, String strAddress, String strCity, String strProvince,
 			int intZip, String strUserName, String strPasscode) throws SQLException {
 		
@@ -158,6 +200,109 @@ public class DBConnect {
 	}
 	
 	
+	public void supInsert(String strName, String strAddress, String contactNum) throws SQLException {
+		
+		PreparedStatement prepStmt = null;
+		
+		String query = "INSERT INTO tblSupplier(strName,strAddress,strContactNum) VALUES(?,?,?)";
+		
+		try {
+			conn.setAutoCommit(false);
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setString(1, strName);
+			prepStmt.setString(2, strAddress);
+			prepStmt.setString(3, contactNum);
+
+			prepStmt.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+				if (conn != null) {
+					try {
+						System.out.println("Transaction is being rolled back");
+						conn.rollback();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+		} finally {
+			if (prepStmt != null) {
+				prepStmt.close();
+			}
+			
+			conn.setAutoCommit(true);
+		}
+	}
+	
+	public void supUpdate(int idSup,String strCustName, String strAddress, String contactNum) throws SQLException {
+		
+		PreparedStatement prepStmt = null;
+		
+		String query = "UPDATE tblSupplier SET strName = ?,strAddress = ?,strContactNum = ? WHERE idSup = ?";
+		
+		try {
+			conn.setAutoCommit(false);
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setString(1, strCustName);
+			prepStmt.setString(2, strAddress);
+			prepStmt.setString(3, contactNum);
+			prepStmt.setInt(4, idSup);
+
+			prepStmt.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+				if (conn != null) {
+					try {
+						System.out.println("Transaction is being rolled back");
+						conn.rollback();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+		} finally {
+			if (prepStmt != null) {
+				prepStmt.close();
+			}
+			
+			conn.setAutoCommit(true);
+		}
+	}
+	
+	public void supDelete(int idSup) throws SQLException {
+		
+		PreparedStatement prepStmt = null;
+		
+		String query = "DELETE FROM tblSupplier WHERE idSup = ?";
+		
+		try {
+			conn.setAutoCommit(false);
+			prepStmt = conn.prepareStatement(query);
+			prepStmt.setInt(1, idSup);
+
+			prepStmt.executeUpdate();
+			conn.commit();
+		} catch (SQLException e) {
+			e.printStackTrace();
+				if (conn != null) {
+					try {
+						System.out.println("Transaction is being rolled back");
+						conn.rollback();
+					} catch (SQLException e1) {
+						e1.printStackTrace();
+					}
+				}
+		} finally {
+			if (prepStmt != null) {
+				prepStmt.close();
+			}
+			
+			conn.setAutoCommit(true);
+		}
+	}
+	
+	
+
 	public void custDelete(int idCust) throws SQLException {
 		PreparedStatement prepStmt = null;
 		

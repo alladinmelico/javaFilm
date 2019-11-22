@@ -100,7 +100,7 @@ public class FrameLogin extends JFrame{
 					while(result.next()) {
 						tempUserName = result.getString("strUserName");
 						idCust = result.getInt("idCust");
-						strCustName = result.getString("strUserName");
+						strCustName = result.getString("strCustName");
 						strAddress = result.getString("strAddress");
 						strCity = result.getString("strCity");
 						strProvince = result.getString("strProvince");
