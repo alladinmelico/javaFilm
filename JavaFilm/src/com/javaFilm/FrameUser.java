@@ -79,6 +79,7 @@ public class FrameUser extends JFrame {
 		panel.setLayout(null);
 		
 		JLabel lblNewLabel = new JLabel("New label");
+		lblNewLabel.setForeground(new Color(255, 255, 255));
 		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 24));
 		lblNewLabel.setBounds(10, 11, 220, 28);
 		panel.add(lblNewLabel);
